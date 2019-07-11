@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<h1>My Home Post Board</h1>
+</head>
+<p>[<a href="/photowall/">PhotoWall</a>]</p>
+<body>
+        <div class="timeline">
+        {{ if .Context}} 
+            {{range .Context}}
+                <div class="note">
+                <p class="noteHeading">{{.UserName}} @ {{.Created}} POST:</p>
+                <p class="noteContent">{{.Content}}</p>
+                <hr>
+                </div>
+            {{end}} 
+        {{else}}
+            <div class="note">
+                <p class="noteHeading">No Post Data</p>
+            </div>
+        {{end}}
+    </div>
+<p>[<a href="/addpost/">AddPost</a>]</p>
+</body>
+</html>

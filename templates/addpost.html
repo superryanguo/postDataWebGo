@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <h1>Adding Post </h1> 
+</head>
+<body>
+<form action="/addpost/" method="POST"> 
+    <div><textarea name="body" rows="20" cols="80"></textarea></div> 
+    <div>
+    <input type="submit" value="AddPost" />
+    <input type="button" value="Cancel" onclick="history.back()" /></div>
+    <input type="hidden" name="CSRFToken" value="{{.}}" />
+</form>
+</body>
+</html>
