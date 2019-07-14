@@ -8,23 +8,23 @@
     <link rel="stylesheet" type="text/css" href="/templates/style.css" />
 </head>
 <body id="editor">
-<span id="file-group" class="hidden">
-    DataAnalysisSource: <input type="file" name="uploadfile" />
-    <!--<input type="submit" value="Upload" />-->
-<progress id="prog" value="0" max="100">
-</progress>
-</span>
-<form action="/addpost/" method="POST"> 
 
-<div id="CodeArea">
-<h2>Input:</h2>
-<textarea id="TestCode" wrap="logical">
-</textarea>
-    <div id="butt">
-    <input type="submit" value="Analyze" />
-    <input type="hidden" name="CSRFToken" value="{{.}}" />
+<form enctype="multipart/form-data"  action="/" method="POST"> 
+    <div id="CodeArea">
+        <h2>Input:</h2>
+        <textarea id="TestCode" wrap="logical">
+        </textarea>
+        <span id="file-group" class="hidden">
+            DataAnalysisSource: <input type="file" name="uploadfile" />
+            <!--<input type="submit" value="Upload" />-->
+        </span>
+        <div id="butt">
+        <input type="submit" value="Analyze" />
+        <input type="hidden" name="CSRFToken" value="{{.}}" />
+        <progress id="prog" value="0" max="100">
+        </progress>
+        </div>
     </div>
-</div>
 </form>
 
 <div id="result">
