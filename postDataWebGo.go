@@ -21,7 +21,7 @@ func tokenCreate() string {
 	h := md5.New()
 	io.WriteString(h, strconv.FormatInt(ct, 10))
 	token := fmt.Sprintf("%x", h.Sum(nil))
-	// fmt.Println("token created :", token)
+	fmt.Println("token created :", token)
 	return token
 }
 func PostDataHandler(w http.ResponseWriter, r *http.Request) {

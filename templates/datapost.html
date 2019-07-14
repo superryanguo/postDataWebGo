@@ -1,18 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <h1>Data Analysis</h1> 
+    <h1 align="center">Data Analysis</h1> 
+<div>
+<p>Pls choose the right data proto file(such as: GPB) upload, and input the bin string, then analyize!</p>
+</div>
+    <link rel="stylesheet" type="text/css" href="/templates/style.css" />
 </head>
-<body>
+<body id="editor">
 <span id="file-group" class="hidden">
     DataAnalysisSource: <input type="file" name="uploadfile" />
+    <!--<input type="submit" value="Upload" />-->
 </span>
 <form action="/addpost/" method="POST"> 
-    <div><textarea name="body" rows="20" cols="80"></textarea></div> 
-    <div>
+
+<div id="CodeArea">
+<h2>Input:</h2>
+<textarea id="TestCode" wrap="logical">
+</textarea>
+    <div id="butt">
     <input type="submit" value="Analyze" />
-    <input type="button" value="Cancel" onclick="history.back()" /></div>
     <input type="hidden" name="CSRFToken" value="{{.}}" />
+    </div>
+</div>
 </form>
+
+<div id="result">
+    <h2>Output:</h2> 
+    <textarea id="decoderesult" wrap="logical", readonly="readonly">
+    </textarea>
+</div>
+
+
 </body>
 </html>
