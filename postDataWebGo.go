@@ -14,9 +14,10 @@ import (
 )
 
 type DataContext struct {
-	Token  string
-	Binstr string
-	Decode string
+	Token      string
+	Binstr     string
+	Decode     string
+	Returncode string
 }
 
 func tokenCreate() string {
