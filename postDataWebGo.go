@@ -25,22 +25,21 @@ func tokenCreate() string {
 	h := md5.New()
 	io.WriteString(h, strconv.FormatInt(ct, 10))
 	token := fmt.Sprintf("%x", h.Sum(nil))
-	fmt.Println("token created :", token)
+	//fmt.Println("token created :", token)
 	return token
 }
 func PostDataHandler(w http.ResponseWriter, r *http.Request) {
-	var context DataContext
-	//context.Binstr = "01221212"
-	//context.Decode = "0sdfsdfdsfds1221212"
 	var e error
-	fmt.Println("the r.methond is", r.Method)
+	ti := time.Now().Format("2006-01-02 15:04:05")
 	if r.Method == "GET" {
+		var context DataContext
 		t, e := template.ParseFiles("./templates/datapost.html")
 		if e != nil {
 			http.Error(w, e.Error(), http.StatusInternalServerError)
 			return
 		}
 		context.Token = tokenCreate()
+		fmt.Println(ti, "the r.methond ", r.Method, "create token", context.Token)
 		expiration := time.Now().Add(365 * 24 * time.Hour)
 		cookie := http.Cookie{Name: "csrftoken", Value: context.Token, Expires: expiration}
 		http.SetCookie(w, &cookie)
@@ -50,6 +49,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if r.Method == "POST" {
+		var context DataContext
 		e = r.ParseForm()
 		if e != nil {
 			http.Error(w, e.Error(), http.StatusInternalServerError)
@@ -59,12 +59,16 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseMultipartForm(32 << 20) //defined maximum size of file
 		formToken := template.HTMLEscapeString(r.Form.Get("CSRFToken"))
 		context.Binstr = template.HTMLEscapeString(r.Form.Get("bodyin"))
-		fmt.Println("data in:", context.Binstr)
+		context.Token = formToken
 		cookie, e := r.Cookie("csrftoken")
 		if e != nil {
 			log.Print(e)
 			return
 		}
+		n := strings.Split(r.RemoteAddr, ":")[0] + "-" + strings.TrimLeft(strings.Fields(r.UserAgent())[1], "(")
+		uname := strings.TrimRight(n, ";")
+		fmt.Printf("%s %s %s capture the indata \"%s\" with cookie token %s and form token %s\n",
+			ti, uname, r.Method, context.Binstr, cookie.Value, context.Token)
 		//fmt.Println("formtoken", formToken, "===", "cooke.value", cookie.Value)
 		if formToken == cookie.Value {
 			file, handler, e := r.FormFile("uploadfile")
@@ -77,23 +81,34 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				f, e := os.OpenFile("./srcproto/"+formToken, os.O_WRONLY|os.O_CREATE, 0666)
 				if e != nil {
 					log.Println(e)
+					context.Returncode = "Can't create the file!"
 					return
 				}
 				defer f.Close()
 				io.Copy(f, file)
 
-				t := time.Now().Format("2006-01-02 15:04:05")
-				n := strings.Split(r.RemoteAddr, ":")[0] + "-" + strings.TrimLeft(strings.Fields(r.UserAgent())[1], "(")
-				uname := strings.TrimRight(n, ";")
-				fmt.Println(uname, "upload a file done!", t)
+				context.Decode = "upload file done"
+				context.Returncode = "Success!"
 
 			} else {
+				context.Returncode = "Can't read the src file!"
 				log.Fatal("Can't create the data source file")
 			}
 		} else {
 			log.Print("form token mismatch")
+			context.Returncode = "form token mismatch"
 		}
-		http.Redirect(w, r, "/", 302)
+		b, e := template.ParseFiles("./templates/datapost.html")
+		if e != nil {
+			http.Error(w, e.Error(), http.StatusInternalServerError)
+			return
+		}
+		e = b.Execute(w, context)
+		if e != nil {
+			http.Error(w, e.Error(), http.StatusInternalServerError)
+			return
+		}
+		//http.Redirect(w, r, "/", 302)
 	} else {
 		log.Print("Unknown request")
 		http.Redirect(w, r, "/", 302)
