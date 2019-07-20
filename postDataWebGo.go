@@ -77,12 +77,13 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("indata :\n", context.Binstr)
 		if formToken == cookie.Value {
 			context.Returncode = "Get EqualToken done"
-			file, handler, e := r.FormFile("uploadfile")
+			file, header, e := r.FormFile("uploadfile")
 			if e != nil {
 				http.Error(w, e.Error(), http.StatusInternalServerError)
 				return
 			}
-			if handler != nil {
+			fmt.Println("heaer", header, "filename", header.Filename)
+			if header != nil && header.Filename != "" {
 				defer file.Close()
 				dir := "./runcmd/" + formToken
 				_, err := os.Stat(dir)
@@ -118,7 +119,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 
 			} else {
 				context.Returncode = "Can't read the src file!"
-				log.Fatal("Can't create the data source file")
+				log.Println("Can't create the data source file, maybe nil or empty upload filename")
 			}
 		} else {
 			log.Print("form token mismatch")
