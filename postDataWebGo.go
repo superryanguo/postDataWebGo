@@ -57,6 +57,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		r.ParseMultipartForm(32 << 20) //defined maximum size of file
+		context.Returncode = "Parse done"
 		formToken := template.HTMLEscapeString(r.Form.Get("CSRFToken"))
 		context.Binstr = template.HTMLEscapeString(r.Form.Get("bodyin"))
 		context.Token = formToken
@@ -67,10 +68,11 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		n := strings.Split(r.RemoteAddr, ":")[0] + "-" + strings.TrimLeft(strings.Fields(r.UserAgent())[1], "(")
 		uname := strings.TrimRight(n, ";")
-		fmt.Printf("%s %s %s capture the indata \"%s\" with cookie token %s and form token %s\n",
-			ti, uname, r.Method, context.Binstr, cookie.Value, context.Token)
-		//fmt.Println("formtoken", formToken, "===", "cooke.value", cookie.Value)
+		fmt.Printf("%s %s %s  with cookie token %s and form token %s\n",
+			ti, uname, r.Method, cookie.Value, context.Token)
+		fmt.Println("indata :\n", context.Binstr)
 		if formToken == cookie.Value {
+			context.Returncode = "Get EqualToken done"
 			file, handler, e := r.FormFile("uploadfile")
 			if e != nil {
 				http.Error(w, e.Error(), http.StatusInternalServerError)
@@ -78,7 +80,15 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			if handler != nil {
 				defer file.Close()
-				f, e := os.OpenFile("./srcproto/"+formToken, os.O_WRONLY|os.O_CREATE, 0666)
+
+				e = os.Mkdir("./runcmd/"+formToken, os.ModePerm)
+				if e != nil {
+					log.Println(e)
+					context.Returncode = "Can't create the dir!"
+					return
+				}
+				context.Returncode = "create the dir done"
+				f, e := os.OpenFile("./runcmd/"+formToken+"/my.proto", os.O_WRONLY|os.O_CREATE, 0666)
 				if e != nil {
 					log.Println(e)
 					context.Returncode = "Can't create the file!"
@@ -86,6 +96,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				defer f.Close()
 				io.Copy(f, file)
+				context.Returncode = "upload file done"
 
 				context.Decode = "upload file done"
 				context.Returncode = "Success!"
@@ -119,7 +130,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", PostDataHandler)
 	http.Handle("/templates/", http.StripPrefix("/templates/", http.FileServer(http.Dir("./templates"))))
-	http.Handle("/srcproto/", http.StripPrefix("/srcproto/", http.FileServer(http.Dir("./srcproto"))))
+	http.Handle("/runcmd/", http.StripPrefix("/runcmd/", http.FileServer(http.Dir("./runcmd"))))
 	log.Print("Running the server on port 8091.")
 	log.Fatal(http.ListenAndServe(":8091", nil))
 }
