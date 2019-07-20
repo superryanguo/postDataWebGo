@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -98,6 +99,11 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				io.Copy(f, file)
 				context.Returncode = "upload file done"
 
+				//run cmd for what you want
+				shellfile := "./templates/example.sh"
+				output := runcmd(shellfile)
+				context.Returncode = fmt.Sprintf("cmdrun: %s", output)
+				fmt.Println(context.Returncode)
 				context.Decode = "upload file done"
 				context.Returncode = "Success!"
 
@@ -127,6 +133,14 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func runcmd(shellfile string) []byte {
+	cmd := exec.Command("sh", "-c", shellfile)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return output
+}
 func main() {
 	http.HandleFunc("/", PostDataHandler)
 	http.Handle("/templates/", http.StripPrefix("/templates/", http.FileServer(http.Dir("./templates"))))

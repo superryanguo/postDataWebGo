@@ -8,6 +8,7 @@ postDataWebGo
 *.swp
 *.swo
 srcproto/*
+runcmd/*
 
 # Test binary, build with `go test -c`
 *.test
