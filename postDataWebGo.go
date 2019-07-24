@@ -63,6 +63,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		context.Returncode = "Parse done"
 		formToken := template.HTMLEscapeString(r.Form.Get("CSRFToken"))
 		context.Binstr = template.HTMLEscapeString(r.Form.Get("bodyin"))
+		mode := template.HTMLEscapeString(r.Form.Get("Mode"))
 		context.Token = formToken
 		n := strings.Split(r.RemoteAddr, ":")[0] + "-" + strings.TrimLeft(strings.Fields(r.UserAgent())[1], "(")
 		uname := strings.TrimRight(n, ";")
@@ -72,8 +73,8 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 			context.Returncode = "cookie read error"
 			goto SHOW
 		}
-		fmt.Printf("%s %s %s  with cookie token %s and form token %s\n",
-			ti, uname, r.Method, cookie.Value, context.Token)
+		fmt.Printf("%s %s %s  with cookie token %s and form token %s, Mode:%s\n",
+			ti, uname, r.Method, cookie.Value, context.Token, mode)
 		fmt.Println("indata :\n", context.Binstr)
 		if formToken == cookie.Value {
 			context.Returncode = "Get EqualToken done"

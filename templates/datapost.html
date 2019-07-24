@@ -4,7 +4,8 @@
     <h1 align="center">Data Analysis</h1> 
     <link rel="icon" href="/templates/favicon.ico" type="image/x-icon"/>
 <div>
-<p>Pls choose the right data proto file(such as: GPB) upload, and input the bin string, then analyize!</p>
+<p>Pls choose the right data proto file to upload, and input the bin string, then analyize!</p>
+<p>The hard core mode is crazy to try!</p>
 </div>
     <link rel="stylesheet" type="text/css" href="/templates/style.css" />
 </head>
@@ -14,17 +15,21 @@
     <div id="CodeArea">
         <h2>Input:</h2>
         <textarea id="TestCode" name="bodyin" wrap="logical">
-{{.Binstr}}
+        {{.Binstr}}
         </textarea>
         <span id="file-group" class="hidden">
             DataAnalysisSource: <input type="file" name="uploadfile" />
         </span>
+        <br>Choose the mode:
+        <input type="radio" name="Mode" value="Normal" /> NormalMode
+        <input type="radio" name="Mode" value="HardCore" /> HardCoreMode
+        <br>
         <div id="butt">
         <input type="submit" value="Analyze" />
         <input type="hidden" name="CSRFToken" value="{{.Token}}" />
         <progress id="prog" value="0" max="100">
         </progress>
-        <span>ReturnCode: {{.Returncode}} </span>
+                <span>ReturnCode: {{.Returncode}} </span>
         </div>
     </div>
 </form>
