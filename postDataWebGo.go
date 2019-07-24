@@ -111,7 +111,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 
 				//run cmd for what you want
 				shellfile := "./templates/example.sh"
-				output := runcmd(shellfile)
+				output := runshell(shellfile)
 				context.Returncode = fmt.Sprintf("cmdrun: %s", output)
 				fmt.Println(context.Returncode)
 				context.Decode = "upload file done"
@@ -144,7 +144,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func runcmd(shellfile string) []byte {
+func runshell(shellfile string) []byte {
 	cmd := exec.Command("sh", "-c", shellfile)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
