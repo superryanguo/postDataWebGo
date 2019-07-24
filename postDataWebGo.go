@@ -82,7 +82,6 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, e.Error(), http.StatusInternalServerError)
 				return
 			}
-			fmt.Println("heaer", header, "filename", header.Filename)
 			if header != nil && header.Filename != "" {
 				defer file.Close()
 				dir := "./runcmd/" + formToken
