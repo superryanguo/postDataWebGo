@@ -21,6 +21,8 @@ type DataContext struct {
 	Returncode string
 }
 
+var ProtoFile string = "proto/my.proto"
+
 func tokenCreate() string {
 	ct := time.Now().Unix()
 	h := md5.New()
@@ -110,6 +112,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				context.Returncode = "upload file done"
 
 				//run cmd for what you want
+
 				shellfile := "./templates/example.sh"
 				output := runshell(shellfile)
 				context.Returncode = fmt.Sprintf("cmdrun: %s", output)
@@ -144,8 +147,71 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func runshell(shellfile string) []byte {
-	cmd := exec.Command("sh", "-c", shellfile)
+func parseGpbNormalMode(data string, message string) []byte {
+	pkg := filterPkg(ProtoFile)
+	messageType := pkg + "." + pureCmdStringPlus(message)
+	fmt.Println("parseGpbNormalMode Message type:", messageType)
+	cmdstr := fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data, messageType, ProtoFile)
+	output := runshell(cmdstr)
+	fmt.Printf("parseGpbNormalMode output is:\n%s\n", output)
+	return output
+
+}
+func pureCmdString(str string) string {
+	return strings.Trim(strings.Trim(strings.Trim(strings.Trim(str, "\n"), "\r"), " "), ";")
+}
+
+func pureCmdStringPlus(str string) string {
+	return strings.Replace(strings.Replace(strings.Replace(strings.Replace(str, "\n", "", -1), "\r", "", -1), " ", "", -1), ";", "", -1)
+}
+func filterPkg(proto string) string {
+	cmdstr := fmt.Sprintf("awk '$1 == \"package\" {print $2}' %s", proto)
+	output := runshell(cmdstr)
+	return pureCmdStringPlus(fmt.Sprintf("%s", output))
+
+}
+func filterMessageTypes(proto string) []string {
+	cmdstr := fmt.Sprintf("awk '$1 == \"message\" {print $2}' %s", proto)
+	output := runshell(cmdstr)
+	messages := strings.Split(fmt.Sprintf("%s", output), "\n")
+	fmt.Printf("before filter return %s\n", messages)
+	for i := 0; i < len(messages); {
+		if messages[i] == "\n" {
+			messages = append(messages[:i], messages[i+1:]...)
+		} else {
+			i++
+		}
+	}
+	fmt.Printf("After filter return %s\n", messages)
+	return messages
+}
+
+func hardcoreDecode(proto string, data []byte) []byte {
+	var pkgMesg, cmdstr string
+	pkg := filterPkg(proto)
+	types := filterMessageTypes(proto)
+	for k, message := range types {
+		pkgMesg = pkg + "." + message
+		fmt.Printf("decode the %v type %s", k, pkgMesg)
+
+		cmdstr = fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data, pkgMesg, proto)
+		fmt.Println("cmd =", cmdstr)
+		cmd := exec.Command("sh", "-c", cmdstr)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			fmt.Println("DecodeFail on messageType", pkgMesg, "continue...")
+			continue
+		} else {
+			return output
+		}
+	}
+
+	//finally give a raw decode
+	cmdstr = fmt.Sprintf("echo %x | xxd -r -p | protoc --decode_raw", data)
+	return runshell(cmdstr)
+}
+func runshell(shell string) []byte {
+	cmd := exec.Command("sh", "-c", shell)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
