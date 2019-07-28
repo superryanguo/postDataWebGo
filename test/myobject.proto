@@ -1,0 +1,13 @@
+syntax = "proto2"; 
+package myobject; 
+message User {
+ required int64 id = 1;
+ optional string email = 2;
+ optional string name = 3;
+}
+message Point {
+  required uint32 teid = 1;
+  required string ipv4_add = 2;
+  optional uint32 port = 4;
+  optional uint32 weight = 6;
+  }
