@@ -16,7 +16,7 @@ import (
 
 type DataContext struct {
 	Token      string
-	Binstr     string
+	Binstr     []byte
 	Decode     string
 	Returncode string
 }
@@ -66,6 +66,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		formToken := template.HTMLEscapeString(r.Form.Get("CSRFToken"))
 		context.Binstr = template.HTMLEscapeString(r.Form.Get("bodyin"))
 		mode := template.HTMLEscapeString(r.Form.Get("Mode"))
+		mesgType := template.HTMLEscapeString(r.Form.Get("MessageType"))
 		context.Token = formToken
 		n := strings.Split(r.RemoteAddr, ":")[0] + "-" + strings.TrimLeft(strings.Fields(r.UserAgent())[1], "(")
 		uname := strings.TrimRight(n, ";")
@@ -75,9 +76,9 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 			context.Returncode = "cookie read error"
 			goto SHOW
 		}
-		fmt.Printf("%s %s %s  with cookie token %s and form token %s, Mode:%s\n",
-			ti, uname, r.Method, cookie.Value, context.Token, mode)
-		fmt.Println("indata :\n", context.Binstr)
+		fmt.Printf("%s %s %s  with cookie token %s and form token %s, Mode:%s,Type:%s\n",
+			ti, uname, r.Method, cookie.Value, context.Token, mode, mesgType)
+		fmt.Println("indata :%s\n", context.Binstr)
 		if formToken == cookie.Value {
 			context.Returncode = "Get EqualToken done"
 			file, header, e := r.FormFile("uploadfile")
@@ -112,13 +113,24 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				context.Returncode = "upload file done"
 
 				//run cmd for what you want
+				if mode == "Normal" {
+					if mesgType != "" {
+						output := parseGpbNormalMode(context.Binstr, mesgType, ProtoFile)
+						context.Decode = fmt.Sprintf("%s", output)
+						context.Returncode = "Parse Normal mode done!"
+					} else {
 
-				shellfile := "./templates/example.sh"
-				output := runshell(shellfile)
-				context.Returncode = fmt.Sprintf("cmdrun: %s", output)
-				fmt.Println(context.Returncode)
-				context.Decode = "upload file done"
-				context.Returncode = "Success!"
+						context.Returncode = "Error! NormalMode Must fill the messagetype"
+					}
+					context.Returncode = "Successfully Parse Normal mode done!"
+				} else if mode == "HardCore" {
+					output := hardcoreDecode(ProtoFile, context.Binstr)
+					context.Decode = fmt.Sprintf("%s", output)
+					context.Returncode = "Successfully Parse HardCore mode done!"
+				} else {
+
+					context.Returncode = "Unknown parse mode!"
+				}
 
 			} else {
 				context.Returncode = "Can't read the src file!"
@@ -147,11 +159,11 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func parseGpbNormalMode(data string, message string) []byte {
-	pkg := filterPkg(ProtoFile)
+func parseGpbNormalMode(data []byte, message string, proto string) []byte {
+	pkg := filterPkg(proto)
 	messageType := pkg + "." + pureCmdStringPlus(message)
 	fmt.Println("parseGpbNormalMode Message type:", messageType)
-	cmdstr := fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data, messageType, ProtoFile)
+	cmdstr := fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data, messageType, proto)
 	output := runshell(cmdstr)
 	fmt.Printf("parseGpbNormalMode output is:\n%s\n", output)
 	return output
