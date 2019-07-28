@@ -11,8 +11,8 @@ A google protobuf decoder by posting data on web page based on Golang
 file+data+shellcmd
 
 ## Install
-cd postDataWebGo
-go run
+- cd postDataWebGo
+- go run
 
 ## TODO
 - Add server port setting
