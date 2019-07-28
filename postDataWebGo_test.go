@@ -57,9 +57,14 @@ func TestParseGpbNormalMode(t *testing.T) {
 	if err != nil {
 		t.Fatal("marshaling error: ", err)
 	}
-	out := fmt.Sprintf("%s", ParseGpbNormalMode(data, "User", "./test/myobject.proto"))
-	if !strings.Contains(out, "Ryan") || !strings.Contains(out, "999dingguagua@hotml.com") {
-		t.Error("Data parse fail")
+	p, err := ParseGpbNormalMode(data, "User", "./test/myobject.proto")
+	if err != nil {
+		t.Error(err.Error())
+	} else {
+		out := fmt.Sprintf("%s", p)
+		if !strings.Contains(out, "Ryan") || !strings.Contains(out, "999dingguagua@hotml.com") {
+			t.Error("Data parse fail")
+		}
 	}
 }
 func TestHardcoreDecode(t *testing.T) {
@@ -72,8 +77,13 @@ func TestHardcoreDecode(t *testing.T) {
 	if err != nil {
 		t.Fatal("marshaling error: ", err)
 	}
-	out := fmt.Sprintf("%s", HardcoreDecode("./test/myobject.proto", data))
-	if !strings.Contains(out, "Ryan") || !strings.Contains(out, "999dingguagua@hotml.com") {
-		t.Error("Data parse fail")
+	p, err := HardcoreDecode("./test/myobject.proto", data)
+	if err != nil {
+		t.Error(err.Error())
+	} else {
+		out := fmt.Sprintf("%s", p)
+		if !strings.Contains(out, "Ryan") || !strings.Contains(out, "999dingguagua@hotml.com") {
+			t.Error("Data parse fail")
+		}
 	}
 }

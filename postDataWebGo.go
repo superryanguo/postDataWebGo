@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"io"
@@ -65,7 +66,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		context.Returncode = "Parse done"
 		formToken := template.HTMLEscapeString(r.Form.Get("CSRFToken"))
 		bodyin := template.HTMLEscapeString(r.Form.Get("bodyin"))
-		context.Binstr = []byte(strings.Replace(strings.Replace(bodyin, "\n", "", -1), "\r", "", -1))
+		context.Binstr, _ = hex.DecodeString(pureHtmlDataIn(bodyin))
 		mode := template.HTMLEscapeString(r.Form.Get("Mode"))
 		mesgType := template.HTMLEscapeString(r.Form.Get("MessageType"))
 		context.Token = formToken
@@ -117,17 +118,27 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				//run cmd for what you want
 				if mode == "Normal" {
 					if mesgType != "" {
-						output := ParseGpbNormalMode(context.Binstr, mesgType, upload)
-						context.Decode = fmt.Sprintf("%s", output)
-						context.Returncode = "Successfully Parse Normal mode done!"
+						output, e := ParseGpbNormalMode(context.Binstr, mesgType, upload)
+						if e != nil {
+							context.Decode = e.Error()
+							context.Returncode = fmt.Sprintf("ParseNormalMode Error:%s", e.Error())
+						} else {
+							context.Decode = fmt.Sprintf("%s", output)
+							context.Returncode = "Successfully Parse Normal mode done!"
+						}
 					} else {
-
 						context.Returncode = "Error! NormalMode Must fill the messagetype"
 					}
 				} else if mode == "HardCore" {
-					output := HardcoreDecode(upload, context.Binstr)
-					context.Decode = fmt.Sprintf("%s", output)
-					context.Returncode = "Successfully Parse HardCore mode done!"
+					output, e := HardcoreDecode(upload, context.Binstr)
+					if e != nil {
+						context.Decode = e.Error()
+						context.Returncode = fmt.Sprintf("HardCoreMode Error:%s", e.Error())
+					} else {
+						context.Decode = fmt.Sprintf("%s", output)
+						context.Returncode = "Successfully Parse HardCore mode done!"
+
+					}
 				} else {
 
 					context.Returncode = "Unknown parse mode!"
@@ -160,14 +171,21 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func ParseGpbNormalMode(data []byte, message string, proto string) []byte {
-	pkg := filterPkg(proto)
+func ParseGpbNormalMode(data []byte, message string, proto string) ([]byte, error) {
+	pkg, e := filterPkg(proto)
+	if e != nil {
+		return nil, e
+	}
 	messageType := pkg + "." + pureCmdStringPlus(message)
 	fmt.Println("ParseGpbNormalMode Message type:", messageType)
 	cmdstr := fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data, messageType, proto)
-	output := runshell(cmdstr)
+	fmt.Printf("ParseGpbNormalMode cmdstr:%s\n", cmdstr)
+	output, e := runshell(cmdstr)
+	if e != nil {
+		return nil, e
+	}
 	fmt.Printf("ParseGpbNormalMode output is:\n%s\n", output)
-	return output
+	return output, nil
 
 }
 func pureCmdString(str string) string {
@@ -177,15 +195,21 @@ func pureCmdString(str string) string {
 func pureCmdStringPlus(str string) string {
 	return strings.Replace(strings.Replace(strings.Replace(strings.Replace(str, "\n", "", -1), "\r", "", -1), " ", "", -1), ";", "", -1)
 }
-func filterPkg(proto string) string {
+func filterPkg(proto string) (string, error) {
 	cmdstr := fmt.Sprintf("awk '$1 == \"package\" {print $2}' %s", proto)
-	output := runshell(cmdstr)
-	return pureCmdStringPlus(fmt.Sprintf("%s", output))
+	output, e := runshell(cmdstr)
+	if e != nil {
+		return "", e
+	}
+	return pureCmdStringPlus(fmt.Sprintf("%s", output)), nil
 
 }
-func filterMessageTypes(proto string) []string {
+func filterMessageTypes(proto string) ([]string, error) {
 	cmdstr := fmt.Sprintf("awk '$1 == \"message\" {print $2}' %s", proto)
-	output := runshell(cmdstr)
+	output, e := runshell(cmdstr)
+	if e != nil {
+		return nil, e
+	}
 	messages := strings.Split(fmt.Sprintf("%s", output), "\n")
 	fmt.Printf("before filter return %s\n", messages)
 	for i := 0; i < len(messages); {
@@ -196,13 +220,19 @@ func filterMessageTypes(proto string) []string {
 		}
 	}
 	fmt.Printf("After filter return %s\n", messages)
-	return messages
+	return messages, nil
 }
 
-func HardcoreDecode(proto string, data []byte) []byte {
+func HardcoreDecode(proto string, data []byte) ([]byte, error) {
 	var pkgMesg, cmdstr string
-	pkg := filterPkg(proto)
-	types := filterMessageTypes(proto)
+	pkg, e := filterPkg(proto)
+	if e != nil {
+		return nil, e
+	}
+	types, e := filterMessageTypes(proto)
+	if e != nil {
+		return nil, e
+	}
 	for k, message := range types {
 		pkgMesg = pkg + "." + message
 		fmt.Printf("decode the %v type %s", k, pkgMesg)
@@ -215,21 +245,25 @@ func HardcoreDecode(proto string, data []byte) []byte {
 			fmt.Println("DecodeFail on messageType", pkgMesg, "continue...")
 			continue
 		} else {
-			return output
+			return output, nil
 		}
 	}
-
 	//finally give a raw decode
 	cmdstr = fmt.Sprintf("echo %x | xxd -r -p | protoc --decode_raw", data)
 	return runshell(cmdstr)
 }
-func runshell(shell string) []byte {
+
+func pureHtmlDataIn(in string) string {
+	return strings.TrimSpace(strings.Replace(strings.Replace(strings.Replace(in, "\n", "", -1), "\r", "", -1), "0x", "", -1))
+}
+
+func runshell(shell string) ([]byte, error) {
 	cmd := exec.Command("sh", "-c", shell)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	return output
+	return output, nil
 }
 func main() {
 	http.HandleFunc("/", PostDataHandler)
