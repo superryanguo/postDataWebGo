@@ -103,7 +103,8 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				context.Returncode = "create the dir done"
-				f, e := os.OpenFile("./runcmd/"+formToken+"/my.proto", os.O_WRONLY|os.O_CREATE, 0666)
+				upload := "./runcmd/" + formToken + ProtoFile
+				f, e := os.OpenFile(upload, os.O_WRONLY|os.O_CREATE, 0666)
 				if e != nil {
 					log.Println(e)
 					context.Returncode = "Can't create the file!"
@@ -116,16 +117,15 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				//run cmd for what you want
 				if mode == "Normal" {
 					if mesgType != "" {
-						output := ParseGpbNormalMode(context.Binstr, mesgType, ProtoFile)
+						output := ParseGpbNormalMode(context.Binstr, mesgType, upload)
 						context.Decode = fmt.Sprintf("%s", output)
-						context.Returncode = "Parse Normal mode done!"
+						context.Returncode = "Successfully Parse Normal mode done!"
 					} else {
 
 						context.Returncode = "Error! NormalMode Must fill the messagetype"
 					}
-					context.Returncode = "Successfully Parse Normal mode done!"
 				} else if mode == "HardCore" {
-					output := HardcoreDecode(ProtoFile, context.Binstr)
+					output := HardcoreDecode(upload, context.Binstr)
 					context.Decode = fmt.Sprintf("%s", output)
 					context.Returncode = "Successfully Parse HardCore mode done!"
 				} else {
