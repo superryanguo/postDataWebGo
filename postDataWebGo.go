@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -264,6 +265,12 @@ func runshell(shell string) ([]byte, error) {
 		return nil, err
 	}
 	return output, nil
+}
+func FilterDataString(data string) string {
+	re := regexp.MustCompile("\\[{1}[0-9]*]{1}={1}")
+	str := re.ReplaceAllString(pureHtmlDataIn(data), "")
+	fmt.Println("Filter data=", str)
+	return strings.Replace(strings.Replace(str, ",", "", -1), " ", "", -1)
 }
 func main() {
 	http.HandleFunc("/", PostDataHandler)
