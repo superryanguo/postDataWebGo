@@ -88,10 +88,10 @@ func TestHardcoreDecode(t *testing.T) {
 	}
 }
 
-func TestFilterDataString(t *testing.T) {
+func TestFilterOctDataString(t *testing.T) {
 	data := "[0]=8, [1]=0,[3]=5,[4]=9,[5]=7,[5]=c,[5]=a"
 	expect := "80597ca"
-	if expect != FilterDataString(data) {
+	if expect != FilterOctDataString(data) {
 		t.Error("Filter Data String Error!")
 	}
 }

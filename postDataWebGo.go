@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -24,6 +25,7 @@ type DataContext struct {
 }
 
 var ProtoFile string = "my.proto"
+var JumpBytes int = 16
 
 func tokenCreate() string {
 	ct := time.Now().Unix()
@@ -66,17 +68,22 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseMultipartForm(32 << 20) //defined maximum size of file
 		context.Returncode = "Parse done"
 		formToken := template.HTMLEscapeString(r.Form.Get("CSRFToken"))
-		bodyin := template.HTMLEscapeString(r.Form.Get("bodyin"))
-		context.Binstr, _ = hex.DecodeString(pureHtmlDataIn(bodyin))
 		mode := template.HTMLEscapeString(r.Form.Get("Mode"))
 		mesgType := template.HTMLEscapeString(r.Form.Get("MessageType"))
 		context.Token = formToken
 		n := strings.Split(r.RemoteAddr, ":")[0] + "-" + strings.TrimLeft(strings.Fields(r.UserAgent())[1], "(")
 		uname := strings.TrimRight(n, ";")
+		bodyin := template.HTMLEscapeString(r.Form.Get("bodyin"))
 		cookie, e := r.Cookie("csrftoken")
 		if e != nil {
 			log.Print(e)
-			context.Returncode = "cookie read error"
+			context.Returncode = "cookie read error" + e.Error()
+			goto SHOW
+		}
+		context.Binstr, e = CheckAndFilterDataInput(bodyin)
+		if e != nil || context.Binstr == nil {
+			log.Print(e)
+			context.Returncode = e.Error() + "or nil data"
 			goto SHOW
 		}
 		fmt.Printf("%s %s %s  with cookie token %s and form token %s, Mode:%s,Type:%s\n",
@@ -255,7 +262,9 @@ func HardcoreDecode(proto string, data []byte) ([]byte, error) {
 }
 
 func pureHtmlDataIn(in string) string {
-	return strings.TrimSpace(strings.Replace(strings.Replace(strings.Replace(in, "\n", "", -1), "\r", "", -1), "0x", "", -1))
+	return strings.Replace(strings.Replace(
+		strings.Replace(strings.Replace(in, "\n", "", -1), "\r",
+			"", -1), "0x", "", -1), " ", "", -1)
 }
 
 func runshell(shell string) ([]byte, error) {
@@ -266,7 +275,19 @@ func runshell(shell string) ([]byte, error) {
 	}
 	return output, nil
 }
-func FilterDataString(data string) string {
+func CheckAndFilterDataInput(data string) ([]byte, error) {
+	if strings.Contains(data, "[") && strings.Contains(data, "]") {
+		fmt.Println("[1]=65 type data")
+		//oct := FilterOctDataString(data)
+	} else {
+		fmt.Println("hex 08aebf type data")
+		fmt.Println("PureDataIn :", pureHtmlDataIn(data))
+
+		return hex.DecodeString(pureHtmlDataIn(data))
+	}
+	return nil, errors.New("Errors in check the data")
+}
+func FilterOctDataString(data string) string {
 	re := regexp.MustCompile("\\[{1}[0-9]*]{1}={1}")
 	str := re.ReplaceAllString(pureHtmlDataIn(data), "")
 	fmt.Println("Filter data=", str)
