@@ -249,11 +249,11 @@ func HardcoreDecode(proto string, data []byte) ([]byte, error) {
 		fmt.Println("cmd =", cmdstr)
 		cmd := exec.Command("sh", "-c", cmdstr)
 		output, err := cmd.CombinedOutput()
-		if err != nil {
+		if err != nil || JudgeHardcoreDecodeResult(output) {
 			fmt.Println("DecodeFail on messageType", pkgMesg, "continue...")
 			continue
 		} else {
-			return output, nil
+			return []byte("HardcoreDecode Type->" + pkgMesg + ":\n" + string(output)), nil
 		}
 	}
 	//finally give a raw decode
@@ -261,6 +261,19 @@ func HardcoreDecode(proto string, data []byte) ([]byte, error) {
 	return runshell(cmdstr)
 }
 
+func JudgeHardcoreDecodeResult(result []byte) bool {
+	data := string(result)
+	datas := strings.Split(data, "\n")
+	re := regexp.MustCompile("^[0-9]*:{1} ")
+	for k, v := range datas {
+		fmt.Println(k, "line:", v)
+		if re.MatchString(v) {
+			fmt.Println("JudgeHardcoreDecodeResult return true... on line", k, ":", v)
+			return true
+		}
+	}
+	return false
+}
 func pureHtmlDataIn(in string) string {
 	return strings.Replace(strings.Replace(
 		strings.Replace(strings.Replace(in, "\n", "", -1), "\r",
