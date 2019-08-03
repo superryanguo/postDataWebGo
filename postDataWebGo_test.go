@@ -88,6 +88,39 @@ func TestHardcoreDecode(t *testing.T) {
 	}
 }
 
+func TestHardcoreDecodeHexNoSpace(t *testing.T) {
+	data, err := CheckAndFilterDataInput("0801121739393964696e6767756167756140686f746d6c2e636f6d1a045279616e")
+	if err != nil {
+		t.Error(err.Error())
+	} else {
+		p, err := HardcoreDecode("./test/myobject.proto", data)
+		if err != nil {
+			t.Error(err.Error())
+		} else {
+			out := fmt.Sprintf("%s", p)
+			if !strings.Contains(out, "Ryan") || !strings.Contains(out, "999dingguagua@hotml.com") {
+				t.Error("Data parse fail")
+			}
+		}
+	}
+}
+func TestHardcoreDecodeHexSpace(t *testing.T) {
+	dataSpace := "08 01 12 17 39 39 39 64 69 6e 67 67 75 61 67 75 61 40 68 6f 74 6d 6c 2e 63 6f 6d 1a 04 52 79 61 6e"
+	data, err := CheckAndFilterDataInput(dataSpace)
+	if err != nil {
+		t.Error(err.Error())
+	} else {
+		p, err := HardcoreDecode("./test/myobject.proto", data)
+		if err != nil {
+			t.Error(err.Error())
+		} else {
+			out := fmt.Sprintf("%s", p)
+			if !strings.Contains(out, "Ryan") || !strings.Contains(out, "999dingguagua@hotml.com") {
+				t.Error("Data parse fail")
+			}
+		}
+	}
+}
 func TestFilterOctDataString(t *testing.T) {
 	data := "[0]=8, [1]=0,[3]=5,[4]=9,[5]=7,[5]=c,[5]=a"
 	expect := "80597ca"
