@@ -24,6 +24,7 @@ import (
 //4. server show how many visitor
 //5. escapebytes to jump the header to real gpb bytes
 //6. parse [1]=65 type data in
+//7. server port can be not hard code one
 
 type DataContext struct {
 	Token      string
