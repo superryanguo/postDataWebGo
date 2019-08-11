@@ -35,7 +35,7 @@ type DataContext struct {
 }
 
 var ProtoFile string = "my.proto"
-var EscapeBytes int = 16
+var EscapeBytesMax int = 16
 
 func tokenCreate() string {
 	ct := time.Now().Unix()
@@ -252,19 +252,22 @@ func HardcoreDecode(proto string, data []byte) ([]byte, error) {
 	if e != nil {
 		return nil, e
 	}
-	for k, message := range types {
-		pkgMesg = pkg + "." + message
-		fmt.Printf("decode the %v type %s", k, pkgMesg)
+	for i := 0; i < EscapeBytesMax; i++ {
+		fmt.Printf("HardcoreDecode Index=%d, data=%x\n", i, data[i:])
+		for k, message := range types {
+			pkgMesg = pkg + "." + message
+			fmt.Printf("decode the %v type %s", k, pkgMesg)
 
-		cmdstr = fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data, pkgMesg, proto)
-		fmt.Println("cmd =", cmdstr)
-		cmd := exec.Command("sh", "-c", cmdstr)
-		output, err := cmd.CombinedOutput()
-		if err != nil || JudgeHardcoreDecodeResult(output) {
-			fmt.Println("DecodeFail on messageType", pkgMesg, "continue...")
-			continue
-		} else {
-			return []byte("HardcoreDecode Type->" + pkgMesg + ":\n" + string(output)), nil
+			cmdstr = fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data[i:], pkgMesg, proto)
+			fmt.Println("cmd =", cmdstr)
+			cmd := exec.Command("sh", "-c", cmdstr)
+			output, err := cmd.CombinedOutput()
+			if err != nil || JudgeHardcoreDecodeResult(output) {
+				fmt.Println("DecodeFail on messageType", pkgMesg, "continue...")
+				continue
+			} else {
+				return []byte("HardcoreDecode Type->" + pkgMesg + ":\n" + string(output)), nil
+			}
 		}
 	}
 	//finally give a raw decode

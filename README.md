@@ -13,7 +13,7 @@ Normally, there're several steps:
 - the result or error reason will show on the webpage
 
 Currently only support the hex data, such as: 08011217393939646e
-Or: 08 01 12 17 39 39 64 69 6e
+Or: 08 01 12 17 39 39 64 69 6e.
 Be careful with the data you input, such as wierd format, symbol or something.
 
 ## Two Modes:
