@@ -2,12 +2,12 @@
 A google protobuf decoder by posting data on web page based on Golang.
 
 ## Quick start:
-The google protobuf is not a self-descirbing format, so with a binary stream, pls prepare its 
+The google protobuf is not a self-describing format, so with a binary stream, pls prepare its 
 proto type file, which needs to be uploaded when using this tool.
 Normally, there're several steps:
 - Post data on the web page Input
 - Choose the proto file in DataAnalysisSource
-- Click on the mode, HardCore mode might be a easy way(just click the Analyze)
+- Click on the mode, HardCore mode might be an easy way(just click the Analyze)
 - If the Normal Mode, pls input the message type's name in MessageType
 - click Analyze
 - the result or error reason will show on the webpage
@@ -18,7 +18,8 @@ Be careful with the data you input, such as wierd format, symbol or something.
 
 ## Two Modes:
 - Normal Mode: parse the GPB binary string with the message type name and proto file
-- HardCore Mode: try all the message type from the proto file and give you a result at last
+- HardCore Mode: you don't need to provide the message type name or with a header before
+the GPB bin stream
 
 ![](./webdemo.png)
 
