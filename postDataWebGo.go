@@ -17,15 +17,24 @@ import (
 	"time"
 )
 
+//TODO:
+//1. use the trace log level to avoid the too many trace
+//2. a full cover test case in _test file
+//3. auto loadbuild
+//4. server show how many visitor
+//5. escapebytes to jump the header to real gpb bytes
+//6. parse [1]=65 type data in
+
 type DataContext struct {
 	Token      string
 	Binstr     []byte
+	Encode     string
 	Decode     string
 	Returncode string
 }
 
 var ProtoFile string = "my.proto"
-var JumpBytes int = 16
+var EscapeBytes int = 16
 
 func tokenCreate() string {
 	ct := time.Now().Unix()
@@ -89,6 +98,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%s %s %s  with cookie token %s and form token %s, Mode:%s,Type:%s\n",
 			ti, uname, r.Method, cookie.Value, context.Token, mode, mesgType)
 		fmt.Println("indata :\n", bodyin)
+		context.Encode = hex.EncodeToString(context.Binstr)
 		if formToken == cookie.Value {
 			context.Returncode = "Get EqualToken done"
 			file, header, e := r.FormFile("uploadfile")

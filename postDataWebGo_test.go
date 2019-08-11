@@ -128,3 +128,6 @@ func TestFilterOctDataString(t *testing.T) {
 		t.Error("Filter Data String Error!")
 	}
 }
+func TestOctStringToHex(t *testing.T) {
+	//data := "[0] = 65, [1] = 67, [2] = 5, [3] = 5, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 9, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 8, [17] = 129, [18] = 128"
+}
