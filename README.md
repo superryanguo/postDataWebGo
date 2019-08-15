@@ -27,9 +27,10 @@ the GPB bin stream
 file+data+shellcmd, this branch can be used for this mode.
 Which you can use for other application, not just gpb decode.
 
-## Install
+## Install and Launch
 - cd postDataWebGo
 - go run postDataWebGo.go
+- launch a firefox or chrome with the address: <server's IP>:8091
 
 ## TODO
 Describe in the code
