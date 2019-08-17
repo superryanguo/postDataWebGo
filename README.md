@@ -1,7 +1,6 @@
 # postDataWebGo
 [![Build Status](https://travis-ci.com/superryanguo/postDataWebGo.svg?branch=master)](https://travis-ci.com/superryanguo/postDataWebGo)
-## Introduction
-A google protobuf decoder by posting data on web page based on Golang.
+- A google protobuf decoder by posting data on web page based on Golang.
 
 ## Quick start:
 The google protobuf is not a self-describing format, so with a binary stream, pls prepare its 
@@ -30,9 +29,17 @@ file+data+shellcmd, this branch can be used for this mode.
 Which you can use for other application, not just gpb decode.
 
 ## Install and Launch
+### dependency
+- Download a pre-built binary(protoc-$VERSION-$PLATFORM.zip) from the release page:
+  [https://github.com/protocolbuffers/protobuf/releases](https://github.com/protocolbuffers/protobuf/releases)
+- Install the binary
 - cd postDataWebGo
 - go run postDataWebGo.go
-- launch a firefox or chrome with the address: <server's IP>:8091
+- launch a firefox or chrome with the address: <ServerIP>:8091
+
+## Test Type
+- proto2: verified pass
+- proto3: on-going
 
 ## TODO
 Describe in the code

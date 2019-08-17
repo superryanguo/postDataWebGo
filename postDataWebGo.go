@@ -25,7 +25,7 @@ import (
 //5. escapebytes to jump the header to real gpb bytes[done]
 //6. parse [1] = 65, type data in[done]
 //7. server port can be not hard code one
-//8. trace level and log
+//8. trace level and log[WIP]
 
 type DataContext struct {
 	Token      string
