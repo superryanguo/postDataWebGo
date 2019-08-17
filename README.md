@@ -37,6 +37,19 @@ Which you can use for other application, not just gpb decode.
 - go run postDataWebGo.go
 - launch a firefox or chrome with the address: <ServerIP>:8091
 
+## Two Types Input
+- Hex format: C2 00 00 00 02 9E FC 06
+- Dec format: [0] = 66, [1] = 68, [2] = 1, [3] = 5, [4] = 0, [5] = 0, [6] = 0
+Pls stick to the format, don't add mismatch sample, for hex format, space can be ignored.
+The Dec format value shouldn't be bigger than 255.
+
+## A Quick Demo
+- Open the web page, input the hex data in the left text area:0801121739393964696e6767756167756140686f746d6c2e636f6d1a045279616e
+- Cick the file and choose the  myobject/myobject.proto
+- Choose the Normal Mode and input the MessageType:User, or just choose the HardCore mode
+- Click the Analyze
+- Wow..., check the result in the right text area
+
 ## Test Type
 - proto2: verified pass
 - proto3: on-going
