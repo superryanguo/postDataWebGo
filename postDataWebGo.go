@@ -22,8 +22,8 @@ import (
 //2. a full cover test case in _test file
 //3. auto loadbuild
 //4. server show how many visitor
-//5. escapebytes to jump the header to real gpb bytes
-//6. parse [1]=65 type data in
+//5. escapebytes to jump the header to real gpb bytes[done]
+//6. parse [1] = 65, type data in[done]
 //7. server port can be not hard code one
 
 type DataContext struct {
@@ -123,7 +123,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 				context.Returncode = "create the dir done"
-				upload := "./runcmd/" + formToken + ProtoFile
+				upload := "./runcmd/" + formToken + "/" + ProtoFile
 				f, e := os.OpenFile(upload, os.O_WRONLY|os.O_CREATE, 0666)
 				if e != nil {
 					log.Println(e)
@@ -304,8 +304,8 @@ func runshell(shell string) ([]byte, error) {
 }
 func CheckAndFilterDataInput(data string) ([]byte, error) {
 	if strings.Contains(data, "[") && strings.Contains(data, "]") {
-		fmt.Println("[1]=65 type data")
-		//oct := FilterOctDataString(data)
+		fmt.Println("[1] = 65 type data")
+		return ConvertDecToHexDataString(data)
 	} else {
 		fmt.Println("hex 08aebf type data")
 		fmt.Println("PureDataIn :", pureHtmlDataIn(data))
@@ -314,7 +314,26 @@ func CheckAndFilterDataInput(data string) ([]byte, error) {
 	}
 	return nil, errors.New("Errors in check the data")
 }
-func FilterOctDataString(data string) string {
+func ConvertDecToHexDataString(data string) ([]byte, error) {
+	re := regexp.MustCompile("\\[{1}[0-9]*]{1} ={1} {1}")
+	str := re.ReplaceAllString(data, "")
+	fmt.Println("Filter data=", str)
+	str = strings.TrimSpace(strings.Replace(strings.Replace(strings.Replace(str, "\n", "", -1), "\r", "", -1), ",", "", -1))
+	s := strings.Split(str, " ")
+	fmt.Println("Filter s=", s)
+	b := make([]byte, len(s))
+	for i, v := range s {
+		fmt.Printf("%d=%s\n", i, v)
+		t, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, err
+		}
+		b[i] = byte(t)
+	}
+	fmt.Printf("Fmt b=%x\n", b)
+	return b, nil
+}
+func FilterDecDataString(data string) string {
 	re := regexp.MustCompile("\\[{1}[0-9]*]{1}={1}")
 	str := re.ReplaceAllString(pureHtmlDataIn(data), "")
 	fmt.Println("Filter data=", str)

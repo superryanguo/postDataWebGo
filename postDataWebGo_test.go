@@ -138,13 +138,23 @@ func TestEscapeHardcoreDecodeHexSpace(t *testing.T) {
 		}
 	}
 }
-func TestFilterOctDataString(t *testing.T) {
+func TestFilterDecDataString(t *testing.T) {
 	data := "[0]=8, [1]=0,[3]=5,[4]=9,[5]=7,[5]=c,[5]=a"
 	expect := "80597ca"
-	if expect != FilterOctDataString(data) {
+	if expect != FilterDecDataString(data) {
 		t.Error("Filter Data String Error!")
 	}
 }
-func TestOctStringToHex(t *testing.T) {
-	//data := "[0] = 65, [1] = 67, [2] = 5, [3] = 5, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 9, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 8, [17] = 129, [18] = 128"
+func TestDecStringToHex(t *testing.T) {
+	data := "[0] = 65, [1] = 67, [2] = 5, [3] = 5, [4] = 0, [5] = 0, [6] = 0, [7] = 0, [8] = 0, [9] = 0, [10] = 0, [11] = 9, [12] = 0, [13] = 0, [14] = 0, [15] = 0, [16] = 8, [17] = 129, [18] = 128"
+	//first divide to strings slice
+	//then atoi
+	//then printf%x
+	b, err := ConvertDecToHexDataString(data)
+	if err != nil {
+		t.Errorf("Convert found err=%s", err.Error())
+	}
+	if "41430505000000000000000900000000088180" != fmt.Sprintf("%x", b) {
+		t.Error("Data mismatch")
+	}
 }
