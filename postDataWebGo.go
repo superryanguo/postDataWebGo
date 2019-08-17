@@ -35,7 +35,7 @@ type DataContext struct {
 }
 
 var ProtoFile string = "my.proto"
-var EscapeBytesMax int = 16
+var EscapeBytesMax int = 25
 
 func tokenCreate() string {
 	ct := time.Now().Unix()
