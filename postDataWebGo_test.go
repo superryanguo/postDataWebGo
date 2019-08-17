@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"gpbdecoder/postDataWebGo/test"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"postDataWebGo/test"
 
 	"github.com/golang/protobuf/proto"
 )
