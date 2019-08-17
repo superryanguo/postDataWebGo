@@ -77,7 +77,7 @@ func TestHardcoreDecode(t *testing.T) {
 	if err != nil {
 		t.Fatal("marshaling error: ", err)
 	}
-	p, err := HardcoreDecode("./test/myobject.proto", data)
+	p, err := HardcoreDecode("./myobject/myobject.proto", data)
 	if err != nil {
 		t.Error(err.Error())
 	} else {
