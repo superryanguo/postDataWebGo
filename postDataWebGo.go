@@ -20,7 +20,7 @@ import (
 //TODO:
 //1. use the trace log level to avoid the too many trace
 //2. a full cover test case in _test file
-//3. auto loadbuild
+//3. auto loadbuild[done]
 //4. server show how many visitor
 //5. escapebytes to jump the header to real gpb bytes[done]
 //6. parse [1] = 65, type data in[done]

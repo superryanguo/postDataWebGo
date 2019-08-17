@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"postDataWebGo/myobject"
 	"strings"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/superryanguo/postDataWebGo/myobject"
 )
 
 func TestPostDataHandler(t *testing.T) {
