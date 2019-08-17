@@ -25,6 +25,7 @@ import (
 //5. escapebytes to jump the header to real gpb bytes[done]
 //6. parse [1] = 65, type data in[done]
 //7. server port can be not hard code one
+//8. trace level and log
 
 type DataContext struct {
 	Token      string
@@ -323,7 +324,7 @@ func ConvertDecToHexDataString(data string) ([]byte, error) {
 	fmt.Println("Filter s=", s)
 	b := make([]byte, len(s))
 	for i, v := range s {
-		fmt.Printf("%d=%s\n", i, v)
+		//fmt.Printf("%d=%s\n", i, v)
 		t, err := strconv.Atoi(v)
 		if err != nil {
 			return nil, err

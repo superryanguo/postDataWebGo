@@ -1,4 +1,5 @@
 # postDataWebGo
+[![Build Status](https://travis-ci.com/superryanguo/postDataWebGo.svg?branch=master)](https://travis-ci.com/superryanguo/postDataWebGo)
 A google protobuf decoder by posting data on web page based on Golang.
 
 ## Quick start:
