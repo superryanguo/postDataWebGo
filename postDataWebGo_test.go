@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"postDataWebGo/myobject"
 	"strings"
 	"testing"
-
-	"postDataWebGo/test"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -58,7 +57,7 @@ func TestParseGpbNormalMode(t *testing.T) {
 	if err != nil {
 		t.Fatal("marshaling error: ", err)
 	}
-	p, err := ParseGpbNormalMode(data, "User", "./test/myobject.proto")
+	p, err := ParseGpbNormalMode(data, "User", "./myobject/myobject.proto")
 	if err != nil {
 		t.Error(err.Error())
 	} else {
@@ -94,7 +93,7 @@ func TestHardcoreDecodeHexNoSpace(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	} else {
-		p, err := HardcoreDecode("./test/myobject.proto", data)
+		p, err := HardcoreDecode("./myobject/myobject.proto", data)
 		if err != nil {
 			t.Error(err.Error())
 		} else {
@@ -111,7 +110,7 @@ func TestHardcoreDecodeHexSpace(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	} else {
-		p, err := HardcoreDecode("./test/myobject.proto", data)
+		p, err := HardcoreDecode("./myobject/myobject.proto", data)
 		if err != nil {
 			t.Error(err.Error())
 		} else {
@@ -128,7 +127,7 @@ func TestEscapeHardcoreDecodeHexSpace(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	} else {
-		p, err := HardcoreDecode("./test/myobject.proto", data)
+		p, err := HardcoreDecode("./myobject/myobject.proto", data)
 		if err != nil {
 			t.Error(err.Error())
 		} else {
