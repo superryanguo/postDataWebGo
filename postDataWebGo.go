@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -15,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 //TODO:
@@ -25,7 +26,8 @@ import (
 //5. escapebytes to jump the header to real gpb bytes[done]
 //6. parse [1] = 65, type data in[done]
 //7. server port can be not hard code one
-//8. trace level and log[WIP]
+//8. trace level and log[done]
+//9. progress bar
 
 type DataContext struct {
 	Token      string
@@ -38,12 +40,17 @@ type DataContext struct {
 var ProtoFile string = "my.proto"
 var EscapeBytesMax int = 25
 
+func init() {
+	//log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
+	//log.SetLevel(log.DebugLevel)
+}
 func tokenCreate() string {
 	ct := time.Now().Unix()
 	h := md5.New()
 	io.WriteString(h, strconv.FormatInt(ct, 10))
 	token := fmt.Sprintf("%x", h.Sum(nil))
-	//fmt.Println("token created :", token)
 	return token
 }
 func PostDataHandler(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +65,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			context.Token = tokenCreate()
-			fmt.Println(ti, "the r.method ", r.Method, "create token", context.Token)
+			log.Debug(ti, "the r.method ", r.Method, "create token", context.Token)
 			expiration := time.Now().Add(365 * 24 * time.Hour)
 			cookie := http.Cookie{Name: "csrftoken", Value: context.Token, Expires: expiration}
 			http.SetCookie(w, &cookie)
@@ -87,24 +94,25 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		bodyin := template.HTMLEscapeString(r.Form.Get("bodyin"))
 		cookie, e := r.Cookie("csrftoken")
 		if e != nil {
-			log.Print(e)
+			log.Warn(e)
 			context.Returncode = "cookie read error" + e.Error()
 			goto SHOW
 		}
 		context.Binstr, e = CheckAndFilterDataInput(bodyin)
 		if e != nil || context.Binstr == nil {
-			log.Print(e)
+			log.Warn(e)
 			context.Returncode = e.Error() + "or nil data"
 			goto SHOW
 		}
-		fmt.Printf("%s %s %s  with cookie token %s and form token %s, Mode:%s,Type:%s\n",
+		log.Infof("%s %s %s  with cookie token %s and form token %s, Mode:%s,Type:%s\n",
 			ti, uname, r.Method, cookie.Value, context.Token, mode, mesgType)
-		fmt.Println("indata :\n", bodyin)
+		log.Info("indata :\n", bodyin)
 		context.Encode = hex.EncodeToString(context.Binstr)
 		if formToken == cookie.Value {
 			context.Returncode = "Get EqualToken done"
 			file, header, e := r.FormFile("uploadfile")
 			if e != nil {
+				log.Warn(e)
 				http.Error(w, e.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -116,7 +124,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 					if os.IsNotExist(err) {
 						e = os.Mkdir(dir, os.ModePerm)
 						if e != nil {
-							log.Println(e)
+							log.Warn(e)
 							context.Returncode = "Can't create the dir!"
 							//return //TODO: should we return or go to the html show place?
 							goto SHOW
@@ -127,7 +135,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				upload := "./runcmd/" + formToken + "/" + ProtoFile
 				f, e := os.OpenFile(upload, os.O_WRONLY|os.O_CREATE, 0666)
 				if e != nil {
-					log.Println(e)
+					log.Warn(e)
 					context.Returncode = "Can't create the file!"
 					goto SHOW
 				}
@@ -140,6 +148,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 					if mesgType != "" {
 						output, e := ParseGpbNormalMode(context.Binstr, mesgType, upload)
 						if e != nil {
+							log.Warn(e)
 							context.Decode = e.Error()
 							context.Returncode = fmt.Sprintf("ParseNormalMode Error:%s", e.Error())
 						} else {
@@ -152,6 +161,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				} else if mode == "HardCore" {
 					output, e := HardcoreDecode(upload, context.Binstr)
 					if e != nil {
+						log.Warn(e)
 						context.Decode = e.Error()
 						context.Returncode = fmt.Sprintf("HardCoreMode Error:%s", e.Error())
 					} else {
@@ -160,32 +170,37 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 
 					}
 				} else {
-
+					log.Warn("Unknow parse mode")
 					context.Returncode = "Unknown parse mode!"
 				}
 
 			} else {
 				context.Returncode = "Can't read the src file!"
-				log.Println("Can't create the data source file, maybe nil or empty upload filename")
+				log.Warn("Can't create the data source file, maybe nil or empty upload filename")
 			}
 		} else {
-			log.Print("form token mismatch")
+			log.Warn("form token mismatch")
 			context.Returncode = "form token mismatch"
 		}
 	SHOW:
 		b, e := template.ParseFiles("./templates/datapost.html")
 		if e != nil {
+			log.Warn(e)
 			http.Error(w, e.Error(), http.StatusInternalServerError)
 			return
 		}
+		log.Infof("Encode:\n%s", context.Encode)
+		log.Infof("Decode:\n%s", context.Decode)
+		log.Infof("Returncode:\n%s", context.Returncode)
 		e = b.Execute(w, context)
 		if e != nil {
+			log.Warn(e)
 			http.Error(w, e.Error(), http.StatusInternalServerError)
 			return
 		}
 		//http.Redirect(w, r, "/", 302)
 	} else {
-		log.Print("Unknown request")
+		log.Warn("Unknown request")
 		http.Redirect(w, r, "/", 302)
 	}
 
@@ -197,14 +212,14 @@ func ParseGpbNormalMode(data []byte, message string, proto string) ([]byte, erro
 		return nil, e
 	}
 	messageType := pkg + "." + pureCmdStringPlus(message)
-	fmt.Println("ParseGpbNormalMode Message type:", messageType)
+	log.Debug("ParseGpbNormalMode Message type:", messageType)
 	cmdstr := fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data, messageType, proto)
-	fmt.Printf("ParseGpbNormalMode cmdstr:%s\n", cmdstr)
+	log.Debugf("ParseGpbNormalMode cmdstr:%s\n", cmdstr)
 	output, e := runshell(cmdstr)
 	if e != nil {
 		return nil, e
 	}
-	fmt.Printf("ParseGpbNormalMode output is:\n%s\n", output)
+	log.Debugf("ParseGpbNormalMode output is:\n%s\n", output)
 	return output, nil
 
 }
@@ -231,7 +246,7 @@ func filterMessageTypes(proto string) ([]string, error) {
 		return nil, e
 	}
 	messages := strings.Split(fmt.Sprintf("%s", output), "\n")
-	fmt.Printf("before filter return %s\n", messages)
+	log.Debugf("before filter return %s\n", messages)
 	for i := 0; i < len(messages); {
 		if messages[i] == "\n" {
 			messages = append(messages[:i], messages[i+1:]...)
@@ -239,7 +254,7 @@ func filterMessageTypes(proto string) ([]string, error) {
 			i++
 		}
 	}
-	fmt.Printf("After filter return %s\n", messages)
+	log.Debugf("After filter return %s\n", messages)
 	return messages, nil
 }
 
@@ -254,17 +269,17 @@ func HardcoreDecode(proto string, data []byte) ([]byte, error) {
 		return nil, e
 	}
 	for i := 0; i < EscapeBytesMax; i++ {
-		fmt.Printf("HardcoreDecode Index=%d, data=%x\n", i, data[i:])
+		log.Debugf("HardcoreDecode Index=%d, data=%x\n", i, data[i:])
 		for k, message := range types {
 			pkgMesg = pkg + "." + message
-			fmt.Printf("decode the %v type %s", k, pkgMesg)
+			log.Debugf("decode the %v type %s\n", k, pkgMesg)
 
 			cmdstr = fmt.Sprintf("echo %x | xxd -r -p | protoc --decode %s %s", data[i:], pkgMesg, proto)
-			fmt.Println("cmd =", cmdstr)
+			log.Debug("cmd =", cmdstr)
 			cmd := exec.Command("sh", "-c", cmdstr)
 			output, err := cmd.CombinedOutput()
 			if err != nil || JudgeHardcoreDecodeResult(output) {
-				fmt.Println("DecodeFail on messageType", pkgMesg, "continue...")
+				log.Debug("DecodeFail on messageType", pkgMesg, "continue...")
 				continue
 			} else {
 				return []byte("HardcoreDecode Type->" + pkgMesg + ":\n" + string(output)), nil
@@ -281,9 +296,9 @@ func JudgeHardcoreDecodeResult(result []byte) bool {
 	datas := strings.Split(data, "\n")
 	re := regexp.MustCompile("^[0-9]*:{1} ")
 	for k, v := range datas {
-		fmt.Println(k, "line:", v)
+		log.Debug(k, "line:", v)
 		if re.MatchString(v) {
-			fmt.Println("JudgeHardcoreDecodeResult return true... on line", k, ":", v)
+			log.Debug("JudgeHardcoreDecodeResult return true... on line", k, ":", v)
 			return true
 		}
 	}
@@ -305,11 +320,11 @@ func runshell(shell string) ([]byte, error) {
 }
 func CheckAndFilterDataInput(data string) ([]byte, error) {
 	if strings.Contains(data, "[") && strings.Contains(data, "]") {
-		fmt.Println("[1] = 65 type data")
+		log.Info("[1] = 65 type data")
 		return ConvertDecToHexDataString(data)
 	} else {
-		fmt.Println("hex 08aebf type data")
-		fmt.Println("PureDataIn :", pureHtmlDataIn(data))
+		log.Info("hex 08aebf type data")
+		log.Debug("PureDataIn :", pureHtmlDataIn(data))
 
 		return hex.DecodeString(pureHtmlDataIn(data))
 	}
@@ -318,10 +333,10 @@ func CheckAndFilterDataInput(data string) ([]byte, error) {
 func ConvertDecToHexDataString(data string) ([]byte, error) {
 	re := regexp.MustCompile("\\[{1}[0-9]*]{1} ={1} {1}")
 	str := re.ReplaceAllString(data, "")
-	fmt.Println("Filter data=", str)
+	log.Debug("Filter data=", str)
 	str = strings.TrimSpace(strings.Replace(strings.Replace(strings.Replace(str, "\n", "", -1), "\r", "", -1), ",", "", -1))
 	s := strings.Split(str, " ")
-	fmt.Println("Filter s=", s)
+	log.Debug("Filter s=", s)
 	b := make([]byte, len(s))
 	for i, v := range s {
 		//fmt.Printf("%d=%s\n", i, v)
@@ -331,19 +346,19 @@ func ConvertDecToHexDataString(data string) ([]byte, error) {
 		}
 		b[i] = byte(t)
 	}
-	fmt.Printf("Fmt b=%x\n", b)
+	log.Debugf("Fmt b=%x\n", b)
 	return b, nil
 }
 func FilterDecDataString(data string) string {
 	re := regexp.MustCompile("\\[{1}[0-9]*]{1}={1}")
 	str := re.ReplaceAllString(pureHtmlDataIn(data), "")
-	fmt.Println("Filter data=", str)
+	log.Debug("Filter data=", str)
 	return strings.Replace(strings.Replace(str, ",", "", -1), " ", "", -1)
 }
 func main() {
 	http.HandleFunc("/", PostDataHandler)
 	http.Handle("/templates/", http.StripPrefix("/templates/", http.FileServer(http.Dir("./templates"))))
 	http.Handle("/runcmd/", http.StripPrefix("/runcmd/", http.FileServer(http.Dir("./runcmd"))))
-	log.Print("Running the server on port 8091.")
+	log.Info("Running the server on port 8091.")
 	log.Fatal(http.ListenAndServe(":8091", nil))
 }
