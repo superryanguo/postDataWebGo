@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	dstore "postDataWebGo/datastore"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,14 +20,14 @@ import (
 )
 
 //TODO:
-//1. use the trace log level to avoid the too many trace
+//1. use the trace log level to avoid the too many trace[done]
 //2. a full cover test case in _test file
 //3. auto loadbuild[done]
 //4. server show how many visitor
 //5. escapebytes to jump the header to real gpb bytes[done]
 //6. parse [1] = 65, type data in[done]
 //7. server port can be not hard code one
-//8. trace level and log[done]
+//8. light-weight datastore about the vistor operation[done]
 //9. progress bar
 
 type DataContext struct {
@@ -43,8 +44,8 @@ var EscapeBytesMax int = 25
 func init() {
 	//log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
-	//log.SetLevel(log.DebugLevel)
+	//log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 }
 func tokenCreate() string {
 	ct := time.Now().Unix()
@@ -55,6 +56,7 @@ func tokenCreate() string {
 }
 func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 	var e error
+	var summary string
 	ti := time.Now().Format("2006-01-02 15:04:05")
 	if r.Method == "GET" {
 		if r.RequestURI != "/favicon.ico" {
@@ -106,6 +108,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Infof("%s %s %s  with cookie token %s and form token %s, Mode:%s,Type:%s\n",
 			ti, uname, r.Method, cookie.Value, context.Token, mode, mesgType)
+		summary = ti + "|" + r.Method + "|" + mode + "|" + mesgType
 		log.Info("indata :\n", bodyin)
 		context.Encode = hex.EncodeToString(context.Binstr)
 		if formToken == cookie.Value {
@@ -154,6 +157,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 						} else {
 							context.Decode = fmt.Sprintf("%s", output)
 							context.Returncode = "Successfully Parse Normal mode done!"
+							summary += "Succ"
 						}
 					} else {
 						context.Returncode = "Error! NormalMode Must fill the messagetype"
@@ -167,6 +171,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 					} else {
 						context.Decode = fmt.Sprintf("%s", output)
 						context.Returncode = "Successfully Parse HardCore mode done!"
+						summary += "Succ"
 
 					}
 				} else {
@@ -183,6 +188,7 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 			context.Returncode = "form token mismatch"
 		}
 	SHOW:
+		dstore.SendData(uname, summary+"|"+context.Returncode)
 		b, e := template.ParseFiles("./templates/datapost.html")
 		if e != nil {
 			log.Warn(e)
@@ -356,6 +362,7 @@ func FilterDecDataString(data string) string {
 	return strings.Replace(strings.Replace(str, ",", "", -1), " ", "", -1)
 }
 func main() {
+	go dstore.Run()
 	http.HandleFunc("/", PostDataHandler)
 	http.Handle("/templates/", http.StripPrefix("/templates/", http.FileServer(http.Dir("./templates"))))
 	http.Handle("/runcmd/", http.StripPrefix("/runcmd/", http.FileServer(http.Dir("./runcmd"))))

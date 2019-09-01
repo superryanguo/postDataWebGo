@@ -9,6 +9,8 @@ postDataWebGo
 *.swo
 srcproto/*
 runcmd/*
+datastore/data.gb
+datareader/datareader
 
 # Test binary, build with `go test -c`
 *.test
