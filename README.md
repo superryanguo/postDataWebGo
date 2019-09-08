@@ -43,6 +43,9 @@ Which you can use for other application, not just gpb decode.
 Pls stick to the format, don't add mismatch sample, for hex format, space can be ignored.
 The Dec format value shouldn't be bigger than 255.
 
+## Combine your proto if more than one proto files
+- If there's import to refer to other proto files, combine them into one proto file
+
 ## A Quick Demo
 - Open the web page, input the hex data in the left text area:0801121739393964696e6767756167756140686f746d6c2e636f6d1a045279616e
 - Cick the file and choose the  myobject/myobject.proto
