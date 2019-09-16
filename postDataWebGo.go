@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
@@ -27,7 +28,7 @@ import (
 //4. server show how many visitor
 //5. escapebytes to jump the header to real gpb bytes[done]
 //6. parse [1] = 65, type data in[done]
-//7. server port can be not hard code one
+//7. server port can be not hard code one[done]
 //8. light-weight datastore about the vistor operation[done]
 //9. progress bar
 
@@ -363,10 +364,13 @@ func FilterDecDataString(data string) string {
 	return strings.Replace(strings.Replace(str, ",", "", -1), " ", "", -1)
 }
 func main() {
+	port := flag.String("port", "8091", "Server Port")
+	flag.Parse()
+
 	go dstore.Run()
 	http.HandleFunc("/", PostDataHandler)
 	http.Handle("/templates/", http.StripPrefix("/templates/", http.FileServer(http.Dir("./templates"))))
 	http.Handle("/runcmd/", http.StripPrefix("/runcmd/", http.FileServer(http.Dir("./runcmd"))))
-	log.Info("Running the server on port 8091.")
-	log.Fatal(http.ListenAndServe(":8091", nil))
+	log.Infof("Running the server on port %q.", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", *port), nil))
 }

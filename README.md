@@ -34,8 +34,9 @@ Which you can use for other application, not just gpb decode.
   [https://github.com/protocolbuffers/protobuf/releases](https://github.com/protocolbuffers/protobuf/releases)
 - Install the binary
 - cd postDataWebGo
-- go run postDataWebGo.go
-- launch a firefox or chrome with the address: <ServerIP>:8091
+- go build postDataWebGo.go
+- ./postDataWebGo -port=<Port>, if you don't give the port, 8091 is the default port
+- launch a firefox or chrome with the address: <ServerIP>:<Port>
 
 ## Two Types Input
 - Hex format: C2 00 00 00 02 9E FC 06
