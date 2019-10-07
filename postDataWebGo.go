@@ -30,7 +30,7 @@ import (
 //6. parse [1] = 65, type data in[done]
 //7. server port can be not hard code one[done]
 //8. light-weight datastore about the vistor operation[done]
-//9. progress bar
+//9. progress bar[done]
 
 type DataContext struct {
 	Token      string
