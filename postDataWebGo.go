@@ -30,7 +30,9 @@ import (
 //6. parse [1] = 65, type data in[done]
 //7. server port can be not hard code one[done]
 //8. light-weight datastore about the vistor operation[done]
-//9. progress bar[done]
+//9. progress bar[not done]
+//10. multi-access test
+//11. myobject. issue
 
 type DataContext struct {
 	Token      string
@@ -138,6 +140,20 @@ func PostDataHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				context.Returncode = "create the dir done"
 				upload := "./runcmd/" + formToken + "/" + ProtoFile
+				_, e := os.Stat(upload)
+				if e == nil {
+					log.Debug("upload file already exist, rm it first...")
+					shell := "rm -fr " + upload
+					log.Debug("run cmd", shell)
+					cmd := exec.Command("sh", "-c", shell)
+					_, e := cmd.CombinedOutput()
+					if e != nil {
+						log.Warn(e)
+						context.Returncode = "Can't remove the file already exist!"
+						goto SHOW
+					}
+				}
+
 				f, e := os.OpenFile(upload, os.O_WRONLY|os.O_CREATE, 0666)
 				if e != nil {
 					log.Warn(e)
@@ -287,7 +303,7 @@ func HardcoreDecode(proto string, data []byte) ([]byte, error) {
 			cmd := exec.Command("sh", "-c", cmdstr)
 			output, err := cmd.CombinedOutput()
 			if err != nil || JudgeHardcoreDecodeResult(output) {
-				log.Debug("DecodeFail on messageType", pkgMesg, "continue...")
+				log.Debug("DecodeFail on messageType ", pkgMesg, " continue...")
 				continue
 			} else {
 				return []byte("HardcoreDecode Type->" + pkgMesg + ":\n" + string(output)), nil

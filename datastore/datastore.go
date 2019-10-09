@@ -13,6 +13,7 @@ import (
 //2.datamodel:user-TestData:Time,Token,Mode,Type,ReturnCode
 //3.Use json?
 //4.ring-buffer size file to keep the data
+var Timer time.Duration = 30 //min
 type MesgData struct {
 	Name    string
 	Summary string
@@ -41,7 +42,7 @@ func (a *AccRecd) Save(f string) error {
 	////}
 	//}
 
-	log.Debug("Saving to file...")
+	//log.Debug("Saving to file...")
 	file, err := os.OpenFile(f, os.O_RDWR|os.O_CREATE, 0777)
 	defer file.Close()
 	if err != nil {
@@ -157,7 +158,7 @@ func Run() {
 			} else {
 				log.Debug("DataChan closed!")
 			}
-		case <-time.After(time.Second * 20):
+		case <-time.After(time.Minute * Timer):
 			log.Debug("Time Out, save file...")
 			err := DataLib.Save(DataFile)
 			if err != nil {
