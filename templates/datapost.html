@@ -4,15 +4,15 @@
         <h1 align="center">GPB Data Analysis</h1>
         <link rel="icon" href="/templates/favicon.ico" type="image/x-icon"/>
         <style>
-.progressbar{
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    top:0;
-    left: 0;
-    z-index: 100;
-    background-color: #fff;
-}
+        .progressbar{
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top:0;
+            left: 0;
+            z-index: 100;
+            background-color: #fff;
+        }
         .progressbar .run{
             width: 64px;
             height: 64px;
@@ -27,11 +27,11 @@
         </style>
         <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
         <script>
-document.onreadystatechange = function () {
-    if(document.readyState=="interactive"){
-        $(".progressbar").fadeOut();
-    }
-}
+                document.onreadystatechange = function () {
+                    if(document.readyState=="interactive"){
+                        $(".progressbar").fadeOut();
+                    }
+                }
         </script>
         <div>
             <p>Pls choose the right data proto file to upload, and input the bin string, then analyize!</p>
@@ -40,6 +40,11 @@ document.onreadystatechange = function () {
         <link rel="stylesheet" type="text/css" href="/templates/style.css" />
     </head>
     <body id="editor">
+    <script>
+       function pbfunction() {
+         $(".progressbar").fadeIn();
+        }
+    </script>
         <div class="progressbar">
             <div class="run"></div>
         </div>
@@ -59,7 +64,7 @@ document.onreadystatechange = function () {
                 <br>MessageType:
                 <input type="text" name="MessageType" class="form-control" id="add-note-title" placeholder="input here" />
                 <div id="butt">
-                    <input type="submit" value="Analyze" />
+                    <input onclick="pbfunction()" type="submit" value="Analyze" />
                     <input type="hidden" name="CSRFToken" value="{{.Token}}" />
                     <span>ReturnCode: {{.Returncode}} </span>
                 </div>
